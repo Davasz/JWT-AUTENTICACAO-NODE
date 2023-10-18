@@ -1,4 +1,5 @@
 const express = require('express')
+const db = require('./util/dbConnection')
 require('dotenv').config({path: '.env'})
 
 
@@ -9,4 +10,7 @@ app.get('/', (req, res) => {
     res.status(200).json({msg: "Bem-vindo à API!"})
 })
 
-app.listen(port, () => console.log(`Servidor rodando na porta ${port}`))
+app.listen(port, () => {
+    new db().connectMySQL()
+    console.log(`Servidor rodando na porta ${port}`)
+})
