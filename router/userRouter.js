@@ -1,4 +1,5 @@
 const express = require('express')
+const UserController = require('../controllers/UserController')
 
 const router = express.Router()
 
@@ -7,22 +8,10 @@ router.get('/', (req, res) => {
 })
 
 router.post('/auth/register', async (req, res) => {
-    const {name, email, password, confirmPassword} = req.body
-
-    if(!name) {
-        return res.status(422).json({msg : "O nome é obrigatório!"})
-    }
-
-    if(!email) {
-        return res.status(422).json({msg : "O email é obrigatório!"})
-    }
-
-    if(!password) {
-        return res.status(422).json({msg : "A senha é obrigatório!"})
-    }
-
-    if(password != confirmPassword) {
-        return res.status(422).json({msg : "As senhas não conferem!"})
+    try {
+        await UserController.saveUser(req, res)
+    } catch (error) {
+        res.status(500).json({ msg: "Aconteceu um erro no servidor!" });
     }
 })
 
