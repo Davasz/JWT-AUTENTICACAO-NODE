@@ -1,6 +1,6 @@
 const dbConnection = require('../util/dbConnection')
-const db = new dbConnection().connection()
 const bcrypt = require('bcrypt')
+const db = new dbConnection().connection()
 
 class User {
    constructor(name, email, password, confirmPassword) {
@@ -10,65 +10,54 @@ class User {
       this.confirmPassword = confirmPassword
    }
 
-   findByEmail(email) {
-      return new Promise((resolve, reject) => {
-         db.query(
-            'SELECT email FROM users WHERE email = ?',
-            [email],
-            (err, resul) => {
+   async findByEmail(email) {
+      return new Promise(async (resolve, reject) => {
+         try {
+            db.query('SELECT email FROM users WHERE email = ?', [email], (err, results) => {
                if (err) {
                   reject({ msg: err.sqlMessage })
                } else {
-                  resolve(resul)
+                  resolve(results)
                }
-            }
-         )
+            })
+         } catch (error) {
+            console.log(error)
+            reject({ msg: error.sqlMessage })
+         }
       })
-
    }
 
-   saveUser() {
+   async saveUser() {
       return new Promise(async (resolve, reject) => {
+         try {
+            const userExists = await this.findByEmail(this.email)
 
-         if (!this.name) {
-            resolve({ msg: "O nome é obrigatório!", status: 422 })
-         }
-
-         if (!this.email) {
-            reject({ msg: "O email é obrigatório!", status: 422 })
-         }
-
-         if (!this.password) {
-            reject({ msg: "A senha é obrigatório!", status: 422 })
-         }
-
-         if (this.password != this.confirmPassword) {
-            reject({ msg: "As senhas não conferem!", status: 422 })
-         }
-
-         // Verificar se o usuário existe
-         const userExists = await this.findByEmail(this.email);
-       
-         if (userExists[0]) {
-            reject({ msg: "Esse email já esta sendo usado!", status: 422 })
-         }
-
-         // Criar senha
-         const salt = await bcrypt.genSalt(8)
-         const passwordHashed = await bcrypt.hash(this.password, salt)
-
-         db.query(
-            'INSERT INTO users SET ?',
-            { name: this.name, email: this.email, password: passwordHashed },
-            (err, resul) => {
-               if (err) {
-                  reject({ msg: err.sqlMessage })
-               } else {
-                  resolve(resul)
-               }
+            if (userExists.length > 0) {
+               reject({ msg: "Esse email já está sendo usado" })
+            } else {
+               const salt = await bcrypt.genSalt(8)
+               const passwordHashed = await bcrypt.hash(this.password, salt)
+               db.query('INSERT INTO users SET ?', {
+                  name: this.name,
+                  email: this.email,
+                  password: passwordHashed
+               }, (err, result) => {
+                  if (err) {
+                     reject({ msg: err.sqlMessage })
+                  } else {
+                     resolve(result)
+                  }
+               })
             }
-         )
+         } catch (error) {
+            console.log(error)
+            reject({ msg: error.sqlMessage })
+         }
       })
+   }
+
+   static createFromLoginData(email, password) {
+      return new User(undefined, email, password, undefined)
    }
 }
 
