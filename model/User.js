@@ -12,7 +12,6 @@ class User {
 
    findByEmail(email) {
       return new Promise((resolve, reject) => {
-         console.log(email)
          db.query(
             'SELECT email FROM users WHERE email = ?',
             [email],
@@ -32,27 +31,26 @@ class User {
       return new Promise(async (resolve, reject) => {
 
          if (!this.name) {
-            resolve({ msg: "O nome é obrigatório!" })
+            resolve({ msg: "O nome é obrigatório!", status: 422 })
          }
 
          if (!this.email) {
-            resolve({ msg: "O email é obrigatório!" })
+            reject({ msg: "O email é obrigatório!", status: 422 })
          }
 
          if (!this.password) {
-            resolve({ msg: "A senha é obrigatório!" })
+            reject({ msg: "A senha é obrigatório!", status: 422 })
          }
 
          if (this.password != this.confirmPassword) {
-            resolve({ msg: "As senhas não conferem!" })
+            reject({ msg: "As senhas não conferem!", status: 422 })
          }
 
          // Verificar se o usuário existe
          const userExists = await this.findByEmail(this.email);
-
-         console.log(userExists)
+       
          if (userExists[0]) {
-            resolve({ msg: "Esse email já esta sendo usado!" })
+            reject({ msg: "Esse email já esta sendo usado!", status: 422 })
          }
 
          // Criar senha

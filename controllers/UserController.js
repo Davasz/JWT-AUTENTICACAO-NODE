@@ -45,7 +45,7 @@ class UserController {
             return res.status(200).json({ msg: "Usuário registrado com sucesso!" });
         } catch (error) {
             console.log(error)
-            return res.status(500).json({ msg: "Aconteceu um erro no servidor!" })
+            return res.status(error.status).json({error})
         }
 
     }
