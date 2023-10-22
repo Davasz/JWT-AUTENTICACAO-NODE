@@ -1,5 +1,6 @@
 const dbConnection = require('../util/dbConnection')
 const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
 const db = new dbConnection().connection()
 
 class User {
@@ -13,16 +14,14 @@ class User {
    async findByEmail(email) {
       return new Promise(async (resolve, reject) => {
          try {
-            db.query('SELECT email FROM users WHERE email = ?', [email], (err, results) => {
+            db.query('SELECT * FROM users WHERE email = ?', [email], (err, results) => {
                if (err) {
-                  reject({ msg: err.sqlMessage })
-               } else {
-                  resolve(results)
+                  return reject({ msg: err.sqlMessage })
                }
+               return resolve(results)
             })
          } catch (error) {
-            console.log(error)
-            reject({ msg: error.sqlMessage })
+            return reject({ msg: error.sqlMessage })
          }
       })
    }
@@ -33,26 +32,58 @@ class User {
             const userExists = await this.findByEmail(this.email)
 
             if (userExists.length > 0) {
-               reject({ msg: "Esse email já está sendo usado" })
-            } else {
-               const salt = await bcrypt.genSalt(8)
-               const passwordHashed = await bcrypt.hash(this.password, salt)
-               db.query('INSERT INTO users SET ?', {
-                  name: this.name,
-                  email: this.email,
-                  password: passwordHashed
-               }, (err, result) => {
-                  if (err) {
-                     reject({ msg: err.sqlMessage })
-                  } else {
-                     resolve(result)
-                  }
-               })
+               return reject({ msg: "Esse email já está sendo usado" })
             }
+
+            const salt = await bcrypt.genSalt(8)
+            const passwordHashed = await bcrypt.hash(this.password, salt)
+
+            db.query('INSERT INTO users SET ?', {
+               name: this.name,
+               email: this.email,
+               password: passwordHashed
+            }, (err, result) => {
+               if (err) {
+                  return reject({ msg: err.sqlMessage })
+               }
+               return resolve(result)
+            })
+
          } catch (error) {
-            console.log(error)
-            reject({ msg: error.sqlMessage })
+            return reject({ msg: error })
          }
+      })
+   }
+
+   async loginUser() {
+      return new Promise(async (resolve, reject) => {
+         const user = await this.findByEmail(this.email)
+
+         if (user.length == 0) {
+            return reject({ msg: "Usuário não encontrado" })
+         }
+
+         const checkedPassword = await bcrypt.compare(this.password, user[0].password)
+
+         if (!checkedPassword) {
+            return reject({ msg: "Senha inválida!" })
+         }
+
+         try {
+            const secret = process.env.SECRET
+
+            const token = jwt.sign(
+               {
+                  id: user[0].id
+               },
+               secret,
+            )
+            return resolve({ msg: "Usuário autenticado com sucesso!", token })
+         
+         } catch (error) {
+            return reject({ msg: "Erro interno no servidor" })
+         }
+
       })
    }
 

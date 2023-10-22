@@ -13,8 +13,8 @@ class UserController {
 
         try {
             const userToSave = new User(name, email, password, confirmPassword)
-            await userToSave.saveUser()
-            res.status(200).json({ msg: "Usuário registrado com sucesso!" })
+            const results = await userToSave.saveUser()
+            res.status(200).json({ msg: "Usuário registrado com sucesso!", results })
         } catch (error) {
             console.log(error)
             res.status(400).json({ error: error.msg })
@@ -24,15 +24,15 @@ class UserController {
     static async loginUser(req, res) {
         const { email, password } = req.body
 
+        if (!email || !password) {
+            return res.status(422).json({ error: "Dados de usuário inválidos" })
+        }
         try {
             const userToLogin = User.createFromLoginData(email, password)
-
-            if (!email || !password) {
-                return res.status(422).json({ error: "Dados de usuário inválidos" })
-            }
-
+            const results = await userToLogin.loginUser()
+            res.status(200).json({results})
         } catch (error) {
-            res.status(400).json({ error: error.message })
+            res.status(400).json({ error: error.msg })
         }
     }
 }
