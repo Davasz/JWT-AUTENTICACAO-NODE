@@ -1,7 +1,7 @@
 const express = require('express')
 const db = require('./util/dbConnection')
 const swaggerUi = require('swagger-ui-express');
-const swaggerSpecs = require('./swagger');
+const swaggerSpecs = require('./config/swagger');
 require('dotenv').config({path: '.env'})
 
 
