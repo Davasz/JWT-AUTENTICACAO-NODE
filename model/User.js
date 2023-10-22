@@ -4,7 +4,8 @@ const jwt = require('jsonwebtoken')
 const db = new dbConnection().connection()
 
 class User {
-   constructor(name, email, password, confirmPassword) {
+   constructor(id, name, email, password, confirmPassword) {
+      this.id = id
       this.name = name
       this.email = email
       this.password = password
@@ -15,6 +16,21 @@ class User {
       return new Promise(async (resolve, reject) => {
          try {
             db.query('SELECT * FROM users WHERE email = ?', [email], (err, results) => {
+               if (err) {
+                  return reject({ msg: err.sqlMessage })
+               }
+               return resolve(results)
+            })
+         } catch (error) {
+            return reject({ msg: error.sqlMessage })
+         }
+      })
+   }
+
+   async findById(id) {
+      return new Promise(async (resolve, reject) => {
+         try {
+            db.query('SELECT name, email FROM users WHERE id = ?', [id], (err, results) => {
                if (err) {
                   return reject({ msg: err.sqlMessage })
                }
@@ -57,38 +73,52 @@ class User {
 
    async loginUser() {
       return new Promise(async (resolve, reject) => {
-         const user = await this.findByEmail(this.email)
+         const user = await this.findByEmail(this.email);
 
-         if (user.length == 0) {
-            return reject({ msg: "Usuário não encontrado" })
+         if (user.length === 0) {
+            return reject({ msg: "Usuário não encontrado" });
          }
 
-         const checkedPassword = await bcrypt.compare(this.password, user[0].password)
+         const checkedPassword = await bcrypt.compare(this.password, user[0].password);
 
          if (!checkedPassword) {
-            return reject({ msg: "Senha inválida!" })
+            return reject({ msg: "Senha inválida!" });
          }
 
          try {
-            const secret = process.env.SECRET
-
+            const secret = process.env.SECRET;
+            const id = user[0].id
             const token = jwt.sign(
                {
-                  id: user[0].id
-               },
-               secret,
-            )
-            return resolve({ msg: "Usuário autenticado com sucesso!", token })
-         
+                  id
+               }, secret)
+
+            return resolve({ msg: "Usuário autenticado com sucesso!", token });
          } catch (error) {
-            return reject({ msg: "Erro interno no servidor" })
+            return reject({ msg: "Erro interno no servidor" });
+         }
+      });
+   }
+
+   async getUser() {
+
+      return new Promise(async (resolve, reject) => {
+
+         const user = await this.findById(this.id)
+
+         if (user.length == 0) {
+            return reject({ msg: "Usuário não encontrado!" })
          }
 
+         return resolve(user)
       })
    }
 
    static createFromLoginData(email, password) {
-      return new User(undefined, email, password, undefined)
+      return new User(undefined, undefined, email, password, undefined)
+   }
+   static createFromGetData(id) {
+      return new User(id, undefined, undefined, undefined, undefined)
    }
 }
 
