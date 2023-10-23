@@ -21,13 +21,10 @@ Você precisará ter instalado na sua maquina:
 ## 🔧 Instalação
 
 Instale todas as dependências alocadas no package.json
+Crie o banco utilizando o arquivo .SQL
 
 ```bash
   npm install 
-```
-
-```bash
-  Crie o banco utilizando o arquivo .SQL
 ```
 
 ## 📖 Documentação
