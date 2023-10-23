@@ -26,6 +26,10 @@ Instale todas as dependências alocadas no package.json
   npm install 
 ```
 
+```bash
+  Crie o banco utilizando o arquivo .SQL
+```
+
 ## 📖 Documentação
 
 Acesse a documentação criada com o swagger: localhost:{porta}/api-docs
